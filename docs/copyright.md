@@ -1,5 +1,12 @@
-# Copyright 2020, Messiz Qin, All Rights Reserved
+# Copyright 2020, Kate, Weilory, All Rights Reserved
 <br />
+
+<h2>Collaborators</h2>
+
+* <a href='https://github.com/Slesrchik'>Kate</a>
+* <a href='https://github.com/Weilory'>Weilory</a>
+<br />
+
 <h2>DISCLAIMER</h2>
 THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 <br /><br />
@@ -10,7 +17,7 @@ http://www.smustard.com/eula
 <br /><br />
 <hr />
 <h2>INFORMATION</h2>
-Author - Messiz Qin<br />
+Author - Kate, Weilory<br />
 Contact - messizqin@gmail.com<br />
 Name - Python School Info Web Scrapper<br />
 Scrape <b>Top 100 High Schools Information of New York State U.S</b>, illustrate with a properly formated <b>Microsoft Word</b> document (docx) 
