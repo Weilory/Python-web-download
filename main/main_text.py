@@ -365,7 +365,7 @@ docx_path = '/Users/qinyiqi/PycharmProjects/Medium/schools/schools.docx'
 w = Word(docx_path)
 
 
-for schools in List[3:5]:
+for schools in List[4:5]:
     # -----------------------------------------GREAT SCHOOLS-------------------------------------------
     get_url("https://www.google.com/", '//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input',
             " " + State + " greatschools")
@@ -504,16 +504,19 @@ for schools in List[3:5]:
     # alternatives: add text or add graphic, default to graphic
     # to switch around: unhash one code and hash another
     w.add_header('Enrolment by Race/Ethnicity')
-    # w.add_info(' '.join(School_list_result[9].split('\n')))
-    w.add_piechart(School_list_result[9].split('\n'))
+    if School_list_result[9] != 'No data.':
+        w.add_info(' '.join(School_list_result[9].split('\n')))
+    else:
+        w.add_none()
+    # w.add_piechart(School_list_result[9].split('\n'))
 
     w.add_header('Enrolment by Gender')
-    # w.add_info(School_list_result[12])
-    w.add_linechart(extract_gender(School_list_result[12].split(' ')))
+    w.add_info(School_list_result[12])
+    # w.add_linechart(extract_gender(School_list_result[12].split(' ')))
 
     w.add_header('Enrolment by Grade')
-    # w.add_info(School_list_result[13])
-    w.add_barchart(extract_grades(School_list_result[13].split(' ')))
+    w.add_info(School_list_result[13])
+    # w.add_barchart(extract_grades(School_list_result[13].split(' ')))
     School_list_result.clear()
 
 print(w) # print into docx file
