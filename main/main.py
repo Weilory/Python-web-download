@@ -211,8 +211,6 @@ Methods:
     publish: free unit RAM return concat self.headers
 '''
 
-# Attribute: headers = {title:{header:{subheader:info}}} e.g. {'Great Tree College':{'General':{'Principal': 'Eric'}}}
-
 
 class School:
     @staticmethod
@@ -247,12 +245,13 @@ class School:
 Object: Word
 Initialize:
     param 1 = docx abs path
-Attribute: 
+Attributes: 
     result = e.g. [ {'Great Tree College':{'General':{'Principal': 'Eric'}}}, [{'Avalon Grammar...} ]
     names = e.g. ['Great Tree College', 'Avalon Grammar']
     schools = e.g. [School OBJ:{'General':{'Principal': 'Eric'}}, School OBJ:{'General':{'Principal': 'Joseph'}}]
     path = param 1 => docx abs path
 Methods:
+    add_school(): add to College level 
     create_large_header(): add to General level
     create_small_header(): add to Principal level
     add_info(): add to Eric level
@@ -517,6 +516,7 @@ for schools in List[3:5]:
     w.add_barchart(extract_grades(School_list_result[13].split(' ')))
     School_list_result.clear()
 
-print(w)
+print(w) # print into docx file
+
 driver.close()
 driver.quit()
