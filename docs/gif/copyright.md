@@ -24,7 +24,7 @@ Scrape <b>Top 100 High Schools Information of New York State U.S</b>, illustrate
 <hr />
 <h2>USAGE</h2>
 <ol>
-  <li>Edit main.py change all paths to directory on your machine, run main.py, details visit <a href='https://github.com/Weilory/python-school-info-web-srapper/README.md'>README.md</a></li>
+  <li>Edit main.py change all paths to directory on your machine, run main.py, details visit <a href='https://github.com/Weilory/python-school-info-web-srapper/'>README.md</a></li>
 </ol>
 <br />
 <hr />
