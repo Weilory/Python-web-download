@@ -492,7 +492,7 @@ for schools in List[4:5]:
 
     w.add_title('Enrolment Data')
 
-    # alternatives: add text or add graphic, default to graphic
+    # alternatives: add text or add graphic, default to text
     # to switch around: unhash one code and hash another
     w.add_header('Enrolment by Race/Ethnicity')
     if School_list_result[9] != 'No data.':
