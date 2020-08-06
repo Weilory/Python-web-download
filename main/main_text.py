@@ -288,21 +288,12 @@ class Word:
         self.schools[-1].add_info(info)
 
     def add_piechart(self, race_list):
-        if race_list == 'No data.':
-            self.add_none()
-            return
         self.schools[-1].add_info(piechart(race_list))
 
     def add_barchart(self, grades):
-        if grades == 'No data.':
-            self.add_none()
-            return
         self.schools[-1].add_info(barchart(grades))
 
     def add_linechart(self, genders):
-        if genders == 'No data.':
-            self.add_none()
-            return
         self.schools[-1].add_info(linechart(genders))
 
     def add_none(self):
@@ -422,7 +413,7 @@ for schools in List[4:5]:
     get_url("https://www.google.com/", '//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input',
             " " + State + " publicschoolreview")
     # clicker = driver.find_element_by_partial_link_text('(2020)').click()
-    driver.implicitly_wait(5)
+    # driver.implicitly_wait(5)
 
     check_xpath('//*[@id="quick_stats"]/div/div[2]/ul/li[2]/strong')  # Total # Students
 
@@ -505,21 +496,27 @@ for schools in List[4:5]:
     # to switch around: unhash one code and hash another
     w.add_header('Enrolment by Race/Ethnicity')
     if School_list_result[9] != 'No data.':
-        w.add_info(' '.join(School_list_result[9].split('\n')))
+        w.add_info(' '.join(School_list_result[9].split('\n')))    # add text
+        # w.add_piechart(School_list_result[9].split('\n'))    # add graphic
     else:
         w.add_none()
-    # w.add_piechart(School_list_result[9].split('\n'))
 
     w.add_header('Enrolment by Gender')
-    w.add_info(School_list_result[12])
-    # w.add_linechart(extract_gender(School_list_result[12].split(' ')))
+    if School_list_result[12] != 'No data.':
+        w.add_info(School_list_result[12])    # add text
+        # w.add_linechart(extract_gender(School_list_result[12].split(' ')))    # add graphic
+    else:
+        w.add_none()
 
     w.add_header('Enrolment by Grade')
-    w.add_info(School_list_result[13])
-    # w.add_barchart(extract_grades(School_list_result[13].split(' ')))
+    if School_list_result[13] != 'No data.':
+        w.add_info(School_list_result[13])    # add text
+        # w.add_barchart(extract_grades(School_list_result[13].split(' ')))    # add graphic
+    else:
+        w.add_none()
     School_list_result.clear()
 
-print(w) # print into docx file
+print(w)    # print into docx file
 
 driver.close()
 driver.quit()
