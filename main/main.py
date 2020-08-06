@@ -1,5 +1,3 @@
-# For the OP: change all EDIT tags back to what you code has set
-
 """
 Package Requirements:
     - selenium
