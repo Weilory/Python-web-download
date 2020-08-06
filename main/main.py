@@ -1,24 +1,38 @@
 # For the OP: change all EDIT tags back to what you code has set
 
+"""
+Package Requirements:
+    - selenium
+    - openpyxl
+    - scipy
+    - numpy
+    - matplotlib
+    - docx
+    - python-docx
+
+Documentation:
+    - EDIT: change to your own absolute directory
+"""
+
 import os
 import re
-import random
+from io import BytesIO
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 import openpyxl
 
+import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import patches as mpatches
-from io import BytesIO
 
 from docx import Document
 from docx.shared import RGBColor, Pt, Inches
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT, WD_LINE_SPACING, WD_BREAK
 
 List = []
-# EDIT: I changed the path to my own path
-wb = openpyxl.load_workbook('schools/schools.xlsx')
+# EDIT: path of excel file containing NY school names from A1:A100
+wb = openpyxl.load_workbook('/Users/qinyiqi/PycharmProjects/Medium/schools/schools.xlsx')
 sheet = wb['sheet1']
 tuple(sheet['A1':'A100'])
 for rowOfCellObjects in sheet['A1':'A100']:
@@ -28,7 +42,8 @@ for rowOfCellObjects in sheet['A1':'A100']:
 School_list_result = []
 State = "NY"
 
-# EDIT: on macos I have env variables set therefore I don't need to pass in an executable param
+# EDIT: MacOS: -bash `sudo nano \etc\paths` add `/usr/local/bin/chromedriver`, leave param blank
+# EDIT: Win: fill in chromedriver path
 driver = webdriver.Chrome()
 
 
@@ -69,8 +84,10 @@ def get_url(url, _xpath, send_keys):
         print("No data.")
 
 
-# EDIT: adding code -------------------- start
+# extract: convert split-ed web raw string into plot-able [labels, data]
 def extract_grades(arr):
+    if ' '.join(arr) == "No data.":
+        return "No data."
     res = {}
     flag = True
     counter = -1
@@ -85,6 +102,10 @@ def extract_grades(arr):
             elif d == 'Students':
                 flag = False
             elif flag:
+                try:
+                    d = f'Year {int(d)}'
+                except ValueError:
+                    pass
                 res[d] = ''
                 ke.append(d)
             else:
@@ -98,45 +119,17 @@ def extract_grades(arr):
 
 
 def extract_gender(arr):
+    if ' '.join(arr) == "No data.":
+        return "No data."
+
     def give_int(string):
         return int(''.join(string.split(',')))
     return [['male', 'female'], [give_int(arr[-2]), give_int(arr[-1])]]
 
 
-class Color:
-    refer = {0: "0", 1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8", 9: "9", 10: "A",  11: "B",  12: "C",  13: "D",  14: "E",  15: "F"}
-
-    def __init__(self, min_percent, max_percent):
-        if min_percent > max_percent:
-            raise IndexError('min_percent first param must be less than max_percent second param')
-        self.mi = 0.9 * min_percent
-        self.ma = 0.9 * max_percent
-        self.exist = []
-
-    @staticmethod
-    def generate():
-        sa = 0
-        arr = []
-        for i in range(6):
-            ind = random.choice([x for x in range(16)])
-            arr.append(Color.refer[ind])
-            sa += ind
-        return sa, arr
-
-    def new(self):
-        sa, arr = Color.generate()
-        ensure = 0
-        while sa < self.mi or sa > self.ma or arr in self.exist:
-            ensure += 1
-            if ensure > 50:
-                raise OverflowError("Please make the difference between min and max percentages larger")
-            sa, arr = Color.generate()
-        self.exist.append(arr)
-        return f"#{''.join(arr)}"
-
-
+# pass in [label, data], return IO object
 def piechart(race):
-    plt.clf()
+    plt.clf() # clear all previous styles
     plt.style.use('seaborn-talk')
     fig, ax = plt.subplots()
     labels = []
@@ -161,46 +154,45 @@ def piechart(race):
 
 def barchart(grades):
     plt.clf()
-    c = Color(20, 70)
-    colors = []
-    labels = grades[0]
-    numeric = grades[1]
-    for i in range(len(labels)):
-        colors.append(c.new())
-
-    def auto_label(vertical_):
-        for j, rectangle in enumerate(vertical_):
-            height = rectangle.get_height()
-            x_value = rectangle.get_x()
-            width = rectangle.get_width()
-            plt.text(x_value + width / 2., height, "%d" % height, color=colors[j],
-                     ha='center', va='bottom')
-
-    vertical = plt.bar(labels, numeric, edgecolor='k', color=colors)
-    auto_label(vertical)
-    plt.title('Enrolment by Grades')
-    plt.gcf().autofmt_xdate()
+    fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
+    wedges, texts = ax.pie(grades[1], wedgeprops=dict(width=0.5), startangle=-40)
+    bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
+    kw = dict(arrowprops=dict(arrowstyle="-"),
+              bbox=bbox_props, zorder=0, va="center")
+    for i, p in enumerate(wedges):
+        ang = (p.theta2 - p.theta1) / 2. + p.theta1
+        y = np.sin(np.deg2rad(ang))
+        x = np.cos(np.deg2rad(ang))
+        horizontalalignment = {-1: "right", 1: "left"}[int(np.sign(x))]
+        connectionstyle = "angle,angleA=0,angleB={}".format(ang)
+        kw["arrowprops"].update({"connectionstyle": connectionstyle})
+        ax.annotate(f'{grades[0][i]}: {int(grades[1][i])}', xy=(x, y), xytext=(1.35 * np.sign(x), 1.4 * y),
+                    horizontalalignment=horizontalalignment, **kw)
+    ax.set_title("Enrolment by Grades\n\n")
+    plt.tight_layout()
     file = BytesIO()
     plt.savefig(file)
     return file
 
 
 def linechart(genders):
+    def give_percents(sex):
+        return [float(sex[0]/sum(sex))*100, float(sex[1]/sum(sex))*100]
     plt.clf()
     fig, ax = plt.subplots()
     sexes = genders[1]
-    ax.broken_barh([(0, sexes[0]), (sexes[0], sum(sexes))], [10, 9], facecolors=('#00BFD5', '#FC4F30'))
+    # hexvalues: blue, red
+    ax.broken_barh([(0, sexes[0]), (sexes[0], sexes[1])], [10, 9], facecolors=('#00BFD5', '#FC4F30'))
     ax.set_ylim(5, 15)
-    ax.spines['left'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
     ax.set_yticks([10, 25])
+    for direction in ['left', 'bottom', 'top', 'right']:
+        ax.spines[direction].set_visible(False)
     ax.set_axisbelow(True)
     ax.set_yticklabels(['Q1'])
     ax.grid(axis='x')
-    ax.text(sexes[0]*0.4, 14.5, "54%", fontsize=18)
-    ax.text(sum(sexes), 14.5, "43%", fontsize=18)
+    gdp = give_percents(sexes)
+    ax.text(sexes[0]*0.4, 14.5, "%d%%" % gdp[0], fontsize=18)
+    ax.text(sum(sexes)*0.72, 14.5, "%d%%" % gdp[1], fontsize=18)
     fig.suptitle('Enrolment by Gender (Students Only)', fontsize=16)
     leg1 = mpatches.Patch(color='#00BFD5', label='Male')
     leg2 = mpatches.Patch(color='#FC4F30', label='Female')
@@ -208,6 +200,20 @@ def linechart(genders):
     file = BytesIO()
     plt.savefig(file)
     return file
+
+
+'''
+Object: School
+Attribute: headers = {header:{subheader:info}} e.g. {'General':{'School Name': 'Great Tree College', 'Principal': 'Eric'}}
+Methods:
+    create_large_header(): add to General level
+    create_small_header(): add to Principal level
+    add_info(): add to Eric level
+    add_none(): delete Principal level
+    publish: free unit RAM return concat self.headers
+'''
+
+# Attribute: headers = {title:{header:{subheader:info}}} e.g. {'Great Tree College':{'General':{'Principal': 'Eric'}}}
 
 
 class School:
@@ -239,6 +245,25 @@ class School:
         return tem
 
 
+'''
+Object: Word
+Initialize:
+    param 1 = docx abs path
+Attribute: 
+    result = e.g. [ {'Great Tree College':{'General':{'Principal': 'Eric'}}}, [{'Avalon Grammar...} ]
+    names = e.g. ['Great Tree College', 'Avalon Grammar']
+    schools = e.g. [School OBJ:{'General':{'Principal': 'Eric'}}, School OBJ:{'General':{'Principal': 'Joseph'}}]
+    path = param 1 => docx abs path
+Methods:
+    create_large_header(): add to General level
+    create_small_header(): add to Principal level
+    add_info(): add to Eric level
+    add_none(): delete Principal level
+    publish: free unit RAM return concat self.headers
+    __str__(): callable print all to one docx, print 'succeed' after all procedures are finished
+'''
+
+
 class Word:
     def __init__(self, path):
         self.result = []
@@ -260,7 +285,7 @@ class Word:
         self.schools[-1].create_small_header(header)
 
     def add_info(self, info):
-        if info == 'No data.':
+        if info == 'No data.' or info.strip() == 'No data.':
             self.add_none()
             return
         self.schools[-1].add_info(info)
@@ -325,7 +350,7 @@ class Word:
                     if isinstance(sub_info, str):
                         para_sub_info = doc.add_paragraph()
                         para_sub_info.line_spacing_rule = WD_LINE_SPACING.ONE_POINT_FIVE
-                        sub_info_run = para_sub_info.add_run('\t' + sub_info)
+                        sub_info_run = para_sub_info.add_run(f'\t{sub_info} ')
                         sub_info_run.italic = True
                         sub_info_run.font.size = Pt(22)
                         sub_info_run.add_break(WD_BREAK.LINE_CLEAR_ALL)
@@ -339,13 +364,11 @@ class Word:
 
 
 # EDIT: edited saved docx blank file absolute path
-docx_path = '/Users/Me/PycharmProjects/Medium/schools/schools.docx'
+docx_path = '/Users/qinyiqi/PycharmProjects/Medium/schools/schools.docx'
 w = Word(docx_path)
 
-# EDIT: adding code -------------------- end
 
-
-for schools in List[1:2]:
+for schools in List[3:5]:
     # -----------------------------------------GREAT SCHOOLS-------------------------------------------
     get_url("https://www.google.com/", '//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input',
             " " + State + " greatschools")
@@ -441,7 +464,6 @@ for schools in List[1:2]:
           )
     print()
 
-    # EDIT: adding code -------------------- start
     w.add_school(School_list_result[0])
 
     w.add_title("General Information")
@@ -481,16 +503,22 @@ for schools in List[1:2]:
     w.add_info("No")
 
     w.add_title('Enrolment Data')
+
+    # alternatives: add text or add graphic, default to graphic
+    # to switch around: unhash one code and hash another
     w.add_header('Enrolment by Race/Ethnicity')
     # w.add_info(' '.join(School_list_result[9].split('\n')))
     w.add_piechart(School_list_result[9].split('\n'))
+
     w.add_header('Enrolment by Gender')
     # w.add_info(School_list_result[12])
     w.add_linechart(extract_gender(School_list_result[12].split(' ')))
+
     w.add_header('Enrolment by Grade')
     # w.add_info(School_list_result[13])
     w.add_barchart(extract_grades(School_list_result[13].split(' ')))
     School_list_result.clear()
-    # EDIT: adding code -------------------- end
 
 print(w)
+driver.close()
+driver.quit()
